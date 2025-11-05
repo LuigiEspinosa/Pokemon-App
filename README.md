@@ -8,7 +8,17 @@
 ```txt
 .
 ├─ apps/
-│ ├─ frontend/ # Next.js 15 (App Router, RSC) + Tailwind
-│ └─ backend/ # Express, caches + PokeAPI proxy
+│ ├─ frontend/            # Next.js 16 (App Router, RSC) + Tailwind
+│ └─ backend/             # Express, caches + PokeAPI proxy
+├─ docker-compose.yml     # Local dev
 └─ README.md
+```
+
+## Local dev
+
+Docker Required
+
+```zsh
+pnpm install-app
+pnpm dev-app
 ```
