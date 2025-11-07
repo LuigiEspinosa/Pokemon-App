@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   images: {
-    domains: ["raw.githubusercontent.com"],
+    unoptimized: true,   // TEMP fix: bypass optimizer entirely
   },
   async rewrites() {
     const origin = process.env.BACKEND_ORIGIN || "https://api.pokemon.cuatro.dev";
