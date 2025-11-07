@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 
-import { signToken } from '../auth';
+import { signToken } from '../auth.js';
 
 const loginSchema = z.object({
   username: z.string().min(1),

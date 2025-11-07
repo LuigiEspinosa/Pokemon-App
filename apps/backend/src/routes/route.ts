@@ -1,7 +1,7 @@
 import express from 'express';
 
-import { getPokemonData, getPokemonList } from '../controllers/pokemon.controller';
-import { userLogin, userLogout } from '../controllers/login.controller';
+import { getPokemonData, getPokemonList } from '../controllers/pokemon.controller.js';
+import { userLogin, userLogout } from '../controllers/login.controller.js';
 
 const router = express.Router();
 

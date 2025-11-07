@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { getPokemon, listPokemon } from '../services/pokemon.service';
-import { PokemonListItem } from '../types';
+import { getPokemon, listPokemon } from '../services/pokemon.service.js';
+import { PokemonListItem } from '../types.js';
 
 export const getPokemonList = async (req: Request, res: Response) => {
   const page = Math.max(1, Number(req.query.page) || 1);
