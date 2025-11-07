@@ -17,21 +17,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node + pnpm for local builds (optional, but fine to keep)
-      - name: Set up Node.js
+      # Install Node.js and pnpm
+      - name: Set up Node.js and pnpm
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
       - name: Install pnpm
-        run: npm i -g pnpm
+        run: npm install -g pnpm
 
+      # Install dependencies and build the backend
       - name: Backend build
         working-directory: apps/backend
         run: |
           pnpm install --frozen-lockfile
           pnpm run build
 
+      # Install dependencies and build the frontend
       - name: Frontend build
         working-directory: apps/frontend
         run: |
@@ -72,13 +73,13 @@ jobs:
           docker tag  $ECR_REPO_FRONTEND:latest ${{ steps.ecr.outputs.registry }}/$ECR_REPO_FRONTEND:latest
           docker push ${{ steps.ecr.outputs.registry }}/$ECR_REPO_FRONTEND:latest
 
-      # --- Install Terraform ---
+      # --- Install Terraform (fixes "terraform: command not found") ---
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.5
 
-      # --- Provide tfvars from secrets
+      # --- Provide tfvars from secrets (skip if you commit terraform.tfvars) ---
       - name: Write terraform.tfvars
         working-directory: infra/terraform
         run: |
