@@ -93,6 +93,10 @@ jobs:
           EOF
 
       # --- Terraform ---
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: terraform init -input=false
+
       - name: Auto-import existing ALB/TGs into Terraform state (idempotent)
         working-directory: infra/terraform
         shell: bash
@@ -131,9 +135,59 @@ jobs:
             echo "No pre-existing backend TG found."
           fi
 
-      - name: Terraform Init
+      - name: Auto-import preexisting ECS services & Route53 A-records
         working-directory: infra/terraform
-        run: terraform init -input=false
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ZONE_ID="${{ secrets.ROUTE53_ZONE_ID }}"
+          CLUSTER="pokemon-ecs"
+          SVC_FE="pokemon-frontend"
+          SVC_BE="pokemon-backend"
+          APEX="pokemon.cuatro.dev"
+          APIH="api.pokemon.cuatro.dev"
+
+          echo ">>> Import ECS services if they already exist"
+          # Describe returns "servicesNotFound" if missing; we suppress errors and check ARN
+          FE_ARN=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC_FE" \
+            --query 'services[0].serviceArn' --output text 2>/dev/null || true)
+          if [[ -n "$FE_ARN" && "$FE_ARN" != "None" ]]; then
+            echo "Importing ECS service (frontend): $FE_ARN"
+            terraform import -no-color aws_ecs_service.frontend "$FE_ARN" || true
+          else
+            echo "No preexisting frontend ECS service"
+          fi
+
+          BE_ARN=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SVC_BE" \
+            --query 'services[0].serviceArn' --output text 2>/dev/null || true)
+          if [[ -n "$BE_ARN" && "$BE_ARN" != "None" ]]; then
+            echo "Importing ECS service (backend): $BE_ARN"
+            terraform import -no-color aws_ecs_service.backend "$BE_ARN" || true
+          else
+            echo "No preexisting backend ECS service"
+          fi
+
+          echo ">>> Import Route53 A/ALIAS records if they already exist"
+          # R53 import ID format: <zone_id>_<record_name>_<type>
+          # Use names WITHOUT trailing dot
+          APEX_EXISTS=$(aws route53 list-resource-record-sets --hosted-zone-id "$ZONE_ID" \
+            --query "ResourceRecordSets[?Name=='${APEX}.'].Type" --output text || true)
+          if [[ "$APEX_EXISTS" == *"A"* ]]; then
+            echo "Importing A record: ${APEX}"
+            terraform import -no-color aws_route53_record.frontend_a "${ZONE_ID}_${APEX}_A" || true
+          else
+            echo "No preexisting A record for ${APEX}"
+          fi
+
+          API_EXISTS=$(aws route53 list-resource-record-sets --hosted-zone-id "$ZONE_ID" \
+            --query "ResourceRecordSets[?Name=='${APIH}.'].Type" --output text || true)
+          if [[ "$API_EXISTS" == *"A"* ]]; then
+            echo "Importing A record: ${APIH}"
+            terraform import -no-color aws_route53_record.backend_a "${ZONE_ID}_${APIH}_A" || true
+          else
+            echo "No preexisting A record for ${APIH}"
+          fi
 
       - name: Terraform Plan
         working-directory: infra/terraform

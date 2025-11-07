@@ -131,7 +131,6 @@ resource "aws_acm_certificate" "this" {
 }
 
 resource "aws_route53_record" "acm_validation" {
-  allow_overwrite = true
   for_each = {
     for dvo in aws_acm_certificate.this.domain_validation_options :
     dvo.domain_name => {
@@ -146,6 +145,7 @@ resource "aws_route53_record" "acm_validation" {
   type    = each.value.type
   ttl     = 60
   records = [each.value.record]
+  allow_overwrite = true
 }
 
 resource "aws_acm_certificate_validation" "validated" {
@@ -355,7 +355,7 @@ resource "aws_route53_record" "frontend_a" {
   zone_id = var.route53_zone_id
   name    = local.frontend_host
   type    = "A"
-
+  allow_overwrite = true
   alias {
     name                   = aws_lb.app.dns_name
     zone_id                = aws_lb.app.zone_id
@@ -367,7 +367,7 @@ resource "aws_route53_record" "backend_a" {
   zone_id = var.route53_zone_id
   name    = local.api_host
   type    = "A"
-
+  allow_overwrite = true
   alias {
     name                   = aws_lb.app.dns_name
     zone_id                = aws_lb.app.zone_id
