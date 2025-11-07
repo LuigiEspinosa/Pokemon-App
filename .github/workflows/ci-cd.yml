@@ -46,6 +46,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    env:
+      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
