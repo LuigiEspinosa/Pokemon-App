@@ -17,26 +17,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install Node.js and pnpm
-      - name: Set up Node.js and pnpm
+      # Node + pnpm for local builds (optional, but fine to keep)
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "pnpm"
       - name: Install pnpm
-        run: npm install -g pnpm
+        run: npm i -g pnpm
 
-      # Install dependencies and build the backend
       - name: Backend build
         working-directory: apps/backend
         run: |
-          pnpm install
+          pnpm install --frozen-lockfile
           pnpm run build
 
-      # Install dependencies and build the frontend
       - name: Frontend build
         working-directory: apps/frontend
         run: |
-          pnpm install
+          pnpm install --frozen-lockfile
           pnpm run build
 
   deploy:
@@ -49,33 +48,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # --- AWS auth (OIDC) ---
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # --- Push images to ECR ---
       - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Build and push backend Docker image
       - name: Build & push backend image
         run: |
           docker build -t $ECR_REPO_BACKEND:latest apps/backend
-          docker tag $ECR_REPO_BACKEND:latest ${{ steps.ecr.outputs.registry }}/$ECR_REPO_BACKEND:latest
+          docker tag  $ECR_REPO_BACKEND:latest ${{ steps.ecr.outputs.registry }}/$ECR_REPO_BACKEND:latest
           docker push ${{ steps.ecr.outputs.registry }}/$ECR_REPO_BACKEND:latest
 
-      # Build and push frontend Docker image
       - name: Build & push frontend image
         run: |
           docker build -t $ECR_REPO_FRONTEND:latest apps/frontend
-          docker tag $ECR_REPO_FRONTEND:latest ${{ steps.ecr.outputs.registry }}/$ECR_REPO_FRONTEND:latest
+          docker tag  $ECR_REPO_FRONTEND:latest ${{ steps.ecr.outputs.registry }}/$ECR_REPO_FRONTEND:latest
           docker push ${{ steps.ecr.outputs.registry }}/$ECR_REPO_FRONTEND:latest
 
-      # Terraform init, plan, and apply
-      - name: Terraform init/plan/apply
+      # --- Install Terraform ---
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      # --- Provide tfvars from secrets
+      - name: Write terraform.tfvars
         working-directory: infra/terraform
         run: |
-          terraform init -input=false
-          terraform apply -auto-approve -input=false
+          cat > terraform.tfvars << 'EOF'
+          region                 = "${{ env.AWS_REGION }}"
+          account_id             = "${{ secrets.AWS_ACCOUNT_ID }}"
+          ecr_repo_frontend      = "${{ env.ECR_REPO_FRONTEND }}"
+          ecr_repo_backend       = "${{ env.ECR_REPO_BACKEND }}"
+          route53_zone_id        = "${{ secrets.ROUTE53_ZONE_ID }}"
+          ecs_task_execution_role= "${{ secrets.ECS_TASK_EXEC_ROLE_ARN }}"
+          EOF
+
+      # --- Terraform ---
+      - name: Terraform Init
+        working-directory: infra/terraform
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        working-directory: infra/terraform
+        run: terraform validate
+
+      - name: Terraform Apply
+        working-directory: infra/terraform
+        run: terraform apply -auto-approve -input=false
