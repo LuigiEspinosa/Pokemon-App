@@ -42,3 +42,12 @@ variable "ecs_task_execution_role" {
   description = "ARN of the ECS task execution role used to pull images & send logs"
   type        = string
 }
+
+#############################################
+# JWT Secret
+#############################################
+variable "jwt_secret" {
+  type        = string
+  description = "JWT signing secret"
+  sensitive   = true
+}

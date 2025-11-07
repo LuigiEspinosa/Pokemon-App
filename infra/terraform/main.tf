@@ -303,8 +303,12 @@ resource "aws_ecs_task_definition" "backend" {
         }
       ],
       environment = [
-        { name = "POKEAPI_BASE", value = "https://pokeapi.co/api/v2" },
-        { name = "CORS_ORIGIN", value = "https://${local.frontend_host}" }
+        { name = "PORT",            value = "4000" },
+        { name = "NODE_ENV",        value = "production" },
+        { name = "POKEAPI_BASE",    value = "https://pokeapi.co/api/v2" },
+        { name = "CORS_ORIGIN",     value = "https://${local.frontend_host}" },
+        { name = "JWT_SECRET",      value = var.jwt_secret },
+        { name = "JWT_EXPIRES_IN",  value = "7d" }
       ],
       logConfiguration = {
         logDriver = "awslogs",
