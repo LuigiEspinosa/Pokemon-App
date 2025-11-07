@@ -1,0 +1,64 @@
+name: CI/CD
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO_BACKEND: pokemon-backend
+  ECR_REPO_FRONTEND: pokemon-frontend
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Install root deps (none)
+        run: echo "ok"
+      - name: Backend build
+        working-directory: apps/backend
+        run: |
+          pnpm ci
+          pnpm run build
+      - name: Frontend build
+        working-directory: apps/frontend
+        run: |
+          pnpm ci
+          pnpm run build
+
+  deploy:
+    needs: build-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build & push backend image
+        run: |
+          docker build -t $ECR_REPO_BACKEND:latest apps/backend
+          docker tag $ECR_REPO_BACKEND:latest ${{ steps.ecr.outputs.registry }}/$ECR_REPO_BACKEND:latest
+          docker push ${{ steps.ecr.outputs.registry }}/$ECR_REPO_BACKEND:latest
+      - name: Build & push frontend image
+        run: |
+          docker build -t $ECR_REPO_FRONTEND:latest apps/frontend
+          docker tag $ECR_REPO_FRONTEND:latest ${{ steps.ecr.outputs.registry }}/$ECR_REPO_FRONTEND:latest
+          docker push ${{ steps.ecr.outputs.registry }}/$ECR_REPO_FRONTEND:latest
+      - name: Terraform init/plan/apply
+        working-directory: infra/terraform
+        run: |
+          terraform init -input=false
+          terraform apply -auto-approve -input=false

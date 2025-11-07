@@ -1,0 +1,19 @@
+# Terraform state & metadata
+*.tfstate
+*.tfstate.*
+terraform.tfstate*
+terraform.tfvars.backup
+.crash.log
+
+# Terraform local working directory
+.terraform/
+.terraform.lock.hcl
+
+# Sensitive creds (if ever used)
+*.tfvars
+*.env
+
+# Local IDE stuff
+.vscode/
+.idea/
+.DS_Store
