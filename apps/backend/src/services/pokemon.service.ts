@@ -1,6 +1,6 @@
 import axios from "axios";
 import NodeCache from "node-cache";
-import { PokemonListItem } from "./types";
+import { PokemonListItem } from "../types";
 
 const POKEAPI_BASE = process.env.POKEAPI_BASE || 'https://pokeapi.co/api/v2';
 const cache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
@@ -37,6 +37,5 @@ export async function listPokemon(page = 1, pageSize = 20): Promise<{
 
   const payload = { count, results };
   cache.set(key, payload);
-
   return payload;
 }

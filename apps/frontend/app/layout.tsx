@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
 import Link from "next/link";
+import { Poppins } from "next/font/google";
 
 import SvgLogo from "@/components/Images/SvgLogo";
+import SignOut from "@/components/SignOut";
 
 import "./globals.css";
 
@@ -27,9 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 						<Link href="/" className="font-bold inline-flex items-center font-poppins text-2xl">
 							<SvgLogo fill="#fff" width={24} height={24} className="mr-2" /> Pokédex
 						</Link>
-						<a className="text-md font-poppins font-bold" href="/login">
-							Login
-						</a>
+
+						<SignOut />
 					</nav>
 				</header>
 
