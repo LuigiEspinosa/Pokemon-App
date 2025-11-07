@@ -97,10 +97,11 @@ jobs:
         working-directory: infra/terraform
         run: terraform init -input=false
 
-      - name: Terraform Validate
+      - name: Terraform Plan
         working-directory: infra/terraform
-        run: terraform validate
+        run: terraform plan -input=false
 
       - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
         working-directory: infra/terraform
         run: terraform apply -auto-approve -input=false
