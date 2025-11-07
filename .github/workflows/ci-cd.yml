@@ -93,6 +93,44 @@ jobs:
           EOF
 
       # --- Terraform ---
+      - name: Auto-import existing ALB/TGs into Terraform state (idempotent)
+        working-directory: infra/terraform
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Detect existing ALB by name
+          LB_NAME="pokemon-alb"
+          TG_FRONT_NAME="tg-frontend"
+          TG_BACK_NAME="tg-backend"
+
+          LB_ARN=$(aws elbv2 describe-load-balancers --names "$LB_NAME" \
+            --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>/dev/null || true)
+          if [[ -n "$LB_ARN" && "$LB_ARN" != "None" ]]; then
+            echo "Found existing ALB: $LB_ARN"
+            terraform import -no-color aws_lb.app "$LB_ARN" || true
+          else
+            echo "No pre-existing ALB found."
+          fi
+
+          TGF_ARN=$(aws elbv2 describe-target-groups --names "$TG_FRONT_NAME" \
+            --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || true)
+          if [[ -n "$TGF_ARN" && "$TGF_ARN" != "None" ]]; then
+            echo "Found existing frontend TG: $TGF_ARN"
+            terraform import -no-color aws_lb_target_group.frontend "$TGF_ARN" || true
+          else
+            echo "No pre-existing frontend TG found."
+          fi
+
+          TGB_ARN=$(aws elbv2 describe-target-groups --names "$TG_BACK_NAME" \
+            --query 'TargetGroups[0].TargetGroupArn' --output text 2>/dev/null || true)
+          if [[ -n "$TGB_ARN" && "$TGB_ARN" != "None" ]]; then
+            echo "Found existing backend TG: $TGB_ARN"
+            terraform import -no-color aws_lb_target_group.backend "$TGB_ARN" || true
+          else
+            echo "No pre-existing backend TG found."
+          fi
+
       - name: Terraform Init
         working-directory: infra/terraform
         run: terraform init -input=false
