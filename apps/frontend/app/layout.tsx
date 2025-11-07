@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					{children}
 				</main>
 
-				<footer className="mt-4 border-t py-8 text-center text-sm text-gray-500 bg-white">
+				<footer className="mt-4 border-t py-8 px-4 text-center text-sm text-gray-500 bg-white flex-wrap">
 					Built with Next.js + Express - React Technical Interview Exercise
 				</footer>
 			</body>
