@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				</header>
 
 				<main
-					className={`${poppinstSans.className} mx-auto max-w-5xl px-4 pb-4 font-poppins text-dark`}
+					className={`${poppinstSans.className} mt-1 mx-auto max-w-5xl px-4 pb-4 font-poppins text-dark-gray`}
 				>
 					{children}
 				</main>

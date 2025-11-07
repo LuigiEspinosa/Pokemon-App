@@ -1,27 +1,52 @@
+"use client";
+
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useId, useState } from "react";
 import SvgSearch from "../Images/SvgSearch";
-import SelectDropdown from "./SelectDropdown";
 
-const InputForm = () => {
+interface IInputForm {
+	q: string;
+	sort: "id" | "name";
+}
+
+export default function InputForm({ q, sort }: IInputForm) {
+	const id = useId();
+	const router = useRouter();
+	const params = useSearchParams();
+	const [value, setValue] = useState(q);
+
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			const currentQ = params.get("q") ?? "";
+			if (value === currentQ) return;
+
+			const next = new URLSearchParams(params.toString());
+			next.set("q", value);
+			next.set("sort", sort);
+			next.set("page", "1");
+			router.push(`/?${next.toString()}`, { scroll: false });
+		}, 400);
+
+		return () => clearTimeout(handler);
+	}, [value, sort, params, router]);
+
 	return (
-		<form className="flex gap-6 px-2 pb-8" action="/" method="get">
-			<div className="flex-1 min-w-[200px] h-8 relative bg-background rounded-4xl">
-				<SvgSearch
-					width={20}
-					height={20}
-					fill="var(--color-primary)"
-					className="absolute top-1.5 left-4"
-				/>
-				<input
-					name="q"
-					defaultValue={undefined}
-					placeholder="Search"
-					className="border-none w-full h-8 rounded-4xl py-2 pr-4 pl-12 shadow-inner-2 font-poppins text-sm text-medium appearance-none focus:border-none"
-				/>
-			</div>
+		<div className="flex-1 min-w-[220px] h-8 relative bg-background rounded-4xl">
+			<SvgSearch
+				width={20}
+				height={20}
+				className="absolute top-1.5 left-4"
+				fill="var(--color-primary)"
+			/>
 
-			<SelectDropdown />
-		</form>
+			<input
+				id={id}
+				type="search"
+				placeholder="Search"
+				value={value}
+				onChange={(e) => setValue(e.target.value)}
+				className="border-none w-full h-8 rounded-4xl py-2 pr-4 pl-12 shadow-inner-2 font-poppins text-sm text-medium focus:outline-none"
+			/>
+		</div>
 	);
-};
-
-export default InputForm;
+}
