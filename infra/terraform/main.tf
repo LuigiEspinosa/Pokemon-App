@@ -63,6 +63,52 @@ resource "aws_iam_role" "pokemon_backend_task_role" {
 
 data "aws_caller_identity" "current" {}
 
+data "aws_kms_key" "ssm" {
+  key_id = "alias/aws/ssm"
+}
+
+resource "aws_iam_role" "ecs_task_execution" {
+  name = "pokemon-ecs-task-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = { Service = "ecs-tasks.amazonaws.com" },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_managed" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_policy" "ecs_task_execution_ssm" {
+  name = "pokemon-ecs-exec-ssm"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = ["ssm:GetParameter", "ssm:GetParameters"],
+        Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/pokemon/JWT_SECRET"
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["kms:Decrypt"],
+        Resource = data.aws_kms_key.ssm.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_ssm_attach" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.ecs_task_execution_ssm.arn
+}
+
 resource "aws_iam_policy" "pokemon_backend_ssm_policy" {
   name = "pokemon-backend-ssm-policy"
 
@@ -292,7 +338,7 @@ resource "aws_ecs_task_definition" "frontend" {
   network_mode             = "awsvpc"
   cpu                      = 256
   memory                   = 512
-  execution_role_arn       = var.ecs_task_execution_role
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
   container_definitions = jsonencode([
     {
@@ -327,29 +373,42 @@ resource "aws_ecs_task_definition" "backend" {
   network_mode             = "awsvpc"
   cpu                      = 256
   memory                   = 512
-  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
-  task_role_arn            = aws_iam_role.pokemon_backend_task_role.arn
+
+  execution_role_arn = aws_iam_role.ecs_task_execution.arn
+  task_role_arn      = aws_iam_role.pokemon_backend_task_role.arn
 
   container_definitions = jsonencode([
     {
-      name  = "pokemon-backend"
-      image = var.backend_image
+      name  = "backend",                         # <— match service.load_balancer.container_name
+      image = local.ecr_backend_img,             # <— no more var.backend_image
+
+      essential = true,
 
       portMappings = [
-        { containerPort = 4000, hostPort = 4000 }
-      ]
+        { containerPort = 4000, hostPort = 4000, protocol = "tcp" }
+      ],
 
       environment = [
         { name = "NODE_ENV", value = "production" },
-        { name = "PORT",     value = "4000" },
-      ]
+        { name = "PORT",     value = "4000" }
+      ],
 
+      # SSM Parameter Store secret for JWT
       secrets = [
         {
-          name      = "JWT_SECRET"
-          valueFrom = "arn:aws:ssm:us-east-1:${data.aws_caller_identity.current.account_id}:parameter/pokemon/JWT_SECRET"
+          name      = "JWT_SECRET",
+          valueFrom = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/pokemon/JWT_SECRET"
         }
-      ]
+      ],
+
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          awslogs-group         = "/ecs/pokemon-backend",
+          awslogs-region        = var.region,
+          awslogs-stream-prefix = "ecs"
+        }
+      }
     }
   ])
 }
