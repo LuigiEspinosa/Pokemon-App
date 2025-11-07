@@ -1,3 +1,6 @@
+node_modules
+pnpm-lock.yaml
+
 # Terraform state & metadata
 *.tfstate
 *.tfstate.*

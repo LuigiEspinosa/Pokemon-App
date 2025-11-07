@@ -4,18 +4,14 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'raw.githubusercontent.com' },
-      { protocol: 'https', hostname: 'img.pokemondb.net' }
-    ]
+    domains: ["raw.githubusercontent.com"],
   },
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "https://api.pokemon.cuatro.dev/api/:path*", // proxy to backend
-      },
-    ];
+    const origin = process.env.BACKEND_ORIGIN || "https://api.pokemon.cuatro.dev";
+    return [{
+      source: "/api/:path*",
+      destination: `${origin}/api/:path*`
+    }];
   },
 };
 
