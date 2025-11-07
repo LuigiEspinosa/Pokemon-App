@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
+import Image, { ImageLoaderProps } from "next/image";
 import { gsap } from "gsap";
 import { fetchJSON } from "@/lib/api";
 import { PokemonData } from "@/types/pokemon.types";
@@ -11,6 +11,8 @@ import { normalizeDigits } from "@/utils/useNormalize";
 import SvgArrow from "../Images/SvgArrow";
 import SvgLogo from "../Images/SvgLogo";
 import { formatStatName } from "@/utils/formatStats";
+
+const passthroughLoader = ({ src }: ImageLoaderProps) => src;
 
 const TYPE_COLORS: Record<string, string> = {
 	bug: "#93C33D",
@@ -149,6 +151,7 @@ export default function PokemonSheet({ id, onClose }: { id: number | null; onClo
 
 						<section className="relative mt-8 mx-auto aspect-4/3 max-w-md">
 							<Image
+								loader={passthroughLoader}
 								src={
 									data.sprites.other?.["official-artwork"]?.front_default ||
 									data.sprites.front_default ||
@@ -159,6 +162,7 @@ export default function PokemonSheet({ id, onClose }: { id: number | null; onClo
 								sizes="(max-width: 768px) 100vw, 640px"
 								priority
 								fill
+								unoptimized
 							/>
 						</section>
 
