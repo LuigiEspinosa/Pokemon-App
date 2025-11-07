@@ -9,9 +9,7 @@ export default function SignOut() {
 
 	async function handleSignOut() {
 		const res = await logoutAction();
-		if (res.ok) {
-			redirect("/login");
-		}
+		if (res.ok) redirect("/login");
 	}
 
 	return (

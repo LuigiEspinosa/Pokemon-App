@@ -6,26 +6,6 @@
 	/* Identity */
 	--color-primary: #dc0a2d;
 
-	/* Pokemon Type */
-	--color-bug: #a7b723;
-	--color-dark: #75574c;
-	--color-dragon: #7037ff;
-	--color-electric: #f9cf30;
-	--color-fairy: #e69eac;
-	--color-fighting: #c12239;
-	--color-fire: #f57d31;
-	--color-flying: #a891ec;
-	--color-ghost: #70559b;
-	--color-normal: #aaa67f;
-	--color-grass: #74cb48;
-	--color-ground: #dec16b;
-	--color-ice: #9ad6df;
-	--color-poison: #a43e9e;
-	--color-psychic: #fb5584;
-	--color-rock: #b69e31;
-	--color-steel: #b7b9d0;
-	--color-water: #6493eb;
-
 	/* Grayscale */
 	--color-dark-gray: #212121;
 	--color-medium: #666666;

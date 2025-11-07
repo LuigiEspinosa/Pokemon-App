@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { listPokemon } from '../services/pokemon.service';
+import { getPokemon, listPokemon } from '../services/pokemon.service';
 import { PokemonListItem } from '../types';
 
 export const getPokemonList = async (req: Request, res: Response) => {
@@ -32,6 +32,18 @@ export const getPokemonList = async (req: Request, res: Response) => {
     const paginated = results.slice(start, start + pageSize);
 
     res.json({ count, page, pageSize, results: paginated });
+  } catch (error) {
+    console.error('Error fetching Pokémon:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const getPokemonData = async (req: Request, res: Response) => {
+  const id = req.params.id;
+
+  try {
+    const data = await getPokemon(id);
+    res.json(data);
   } catch (error) {
     console.error('Error fetching Pokémon data:', error);
     res.status(500).json({ message: 'Internal Server Error' });

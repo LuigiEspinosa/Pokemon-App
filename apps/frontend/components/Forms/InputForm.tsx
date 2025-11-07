@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import SvgSearch from "../Images/SvgSearch";
 
 interface IInputForm {
@@ -10,7 +10,6 @@ interface IInputForm {
 }
 
 export default function InputForm({ q, sort }: IInputForm) {
-	const id = useId();
 	const router = useRouter();
 	const params = useSearchParams();
 	const [value, setValue] = useState(q);
@@ -40,7 +39,8 @@ export default function InputForm({ q, sort }: IInputForm) {
 			/>
 
 			<input
-				id={id}
+				id="q"
+				name="q"
 				type="search"
 				placeholder="Search"
 				value={value}

@@ -27,10 +27,11 @@ export default function ImageWithFallback({ src, alt, width, height }: IFallback
 				<Image
 					src={src}
 					alt={alt}
-					fill
 					sizes="(max-width: 768px) 50vw, 25vw"
 					className="object-contain"
 					onError={handleError}
+					loading="eager"
+					fill
 				/>
 			)}
 		</>

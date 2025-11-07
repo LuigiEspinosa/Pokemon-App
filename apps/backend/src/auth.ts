@@ -17,7 +17,10 @@ export function signToken(
   payload: AppClaims,
   expiresIn: SignOptions['expiresIn'] = parseExpires(process.env.JWT_EXPIRES_IN)
 ) {
-  return jwt.sign(payload as object, getJwtSecret(), { expiresIn });
+  return jwt.sign(payload as object, getJwtSecret(), {
+    algorithm: "HS256",
+    expiresIn,
+  });
 }
 
 export function verifyToken(token: string): AppClaims & Partial<JwtPayload> {
@@ -27,17 +30,18 @@ export function verifyToken(token: string): AppClaims & Partial<JwtPayload> {
 }
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const auth = req.headers.authorization?.startsWith('Bearer ')
+  const bearer = req.headers.authorization?.startsWith("Bearer ")
     ? req.headers.authorization.slice(7)
     : undefined;
 
-  const token = req.cookies?.token ?? auth;
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const cookies = req.cookies || {};
+  const token = cookies["auth-token"] ?? bearer;
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
 
   try {
     (req as any).user = verifyToken(token);
     next();
   } catch {
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: "Invalid token" });
   }
 }

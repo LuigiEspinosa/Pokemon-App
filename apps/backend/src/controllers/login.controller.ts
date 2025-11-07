@@ -19,7 +19,7 @@ export const userLogin = async (req: Request, res: Response) => {
       const token = signToken({ sub: '1', username: 'admin' });
       const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
 
-      res.cookie('is-logged', token, {
+      res.cookie('auth-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
         sameSite: 'lax',
@@ -41,7 +41,7 @@ export const userLogout = async (_req: Request, res: Response) => {
   const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
 
   try {
-    res.clearCookie('is-logged', {
+    res.clearCookie('auth-token', {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
       sameSite: 'lax',

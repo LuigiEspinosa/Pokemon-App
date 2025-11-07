@@ -37,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					className={`${poppinstSans.className} mt-1 mx-auto max-w-5xl px-4 pb-4 font-poppins text-dark-gray`}
 				>
 					{children}
+					<div id="portal-root" />
 				</main>
 
 				<footer className="mt-4 border-t py-8 px-4 text-center text-sm text-gray-500 bg-white flex-wrap">

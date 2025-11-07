@@ -41,7 +41,7 @@ export async function logoutAction() {
 }
 
 export async function fetchJSON(path: string, init?: RequestInit) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_BASE}/${path}`, {
     ...init,
     headers: { ...(init?.headers || {}), 'Content-Type': 'application/json' },
     credentials: 'include',

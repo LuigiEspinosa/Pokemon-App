@@ -39,3 +39,30 @@ export async function listPokemon(page = 1, pageSize = 20): Promise<{
   cache.set(key, payload);
   return payload;
 }
+
+export async function getPokemon(id: string | number) {
+  const key = `detail:${id}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const { data: pokemonData } = await axios.get(`${POKEAPI_BASE}/pokemon/${id}`);
+  const { data: speciesData } = await axios.get(`${POKEAPI_BASE}/pokemon-species/${id}`);
+
+  const descriptionEntry = speciesData.flavor_text_entries.find((entry: any) => entry.language.name === 'en');
+  const description = descriptionEntry ? descriptionEntry.flavor_text : '';
+
+  const payload = {
+    id: pokemonData.id,
+    name: pokemonData.name,
+    sprites: pokemonData.sprites,
+    abilities: pokemonData.abilities?.map((a: any) => a.ability?.name) || [],
+    stats: pokemonData.stats?.map((m: any) => ({ value: m.base_stat, name: m.stat?.name })) || [],
+    types: pokemonData.types?.map((t: any) => t.type?.name) || [],
+    height: pokemonData.height,
+    weight: pokemonData.weight,
+    description: description || 'No description available.'
+  };
+
+  cache.set(key, payload);
+  return payload;
+}
+
