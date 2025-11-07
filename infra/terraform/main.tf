@@ -352,9 +352,10 @@ resource "aws_ecs_task_definition" "frontend" {
           protocol      = "tcp"
         }
       ],
-      environment = [
-        { name = "NEXT_PUBLIC_API_BASE_URL", value = "https://${local.api_host}/api" }
-      ],
+      environment = concat([
+        { name = "NEXT_PUBLIC_API_BASE_URL",        value = "https://${local.api_host}/api" },
+        { name = "NEXT_DISABLE_IMAGE_OPTIMIZATION", value = "true" }
+      ], []),
       logConfiguration = {
         logDriver = "awslogs",
         options = {
