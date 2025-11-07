@@ -1,7 +1,7 @@
 {
 	"name": "pokemon-backend",
 	"private": true,
-	"type": "module",
+	"type": "commonjs",
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"build": "tsc -p tsconfig.json",
