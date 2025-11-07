@@ -76,8 +76,24 @@ resource "aws_security_group" "alb" {
 
 resource "aws_security_group" "service" {
   name        = "pokemon-svc-sg"
-  description = "ECS services egress"
+  description = "ECS services ingress from ALB and egress to internet"
   vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description    = "ALB - frontend"
+    from_port      = 3000
+    to_port        = 3000
+    protocol       = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  ingress {
+    description    = "ALB - backend"
+    from_port      = 4000
+    to_port        = 4000
+    protocol       = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
 
   egress {
     from_port   = 0
@@ -86,6 +102,7 @@ resource "aws_security_group" "service" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
 
 ############################
 # ALB + Target Groups
@@ -323,7 +340,10 @@ resource "aws_ecs_service" "frontend" {
     container_port   = 3000
   }
 
-  depends_on = [aws_lb_listener_rule.frontend]
+  depends_on = [
+    aws_cloudwatch_log_group.frontend,
+    aws_lb_listener_rule.frontend
+  ]
 }
 
 resource "aws_ecs_service" "backend" {
@@ -345,7 +365,10 @@ resource "aws_ecs_service" "backend" {
     container_port   = 4000
   }
 
-  depends_on = [aws_lb_listener_rule.backend]
+  depends_on = [
+    aws_cloudwatch_log_group.backend,
+    aws_lb_listener_rule.backend
+  ]
 }
 
 ############################
@@ -373,4 +396,17 @@ resource "aws_route53_record" "backend_a" {
     zone_id                = aws_lb.app.zone_id
     evaluate_target_health = false
   }
+}
+
+############################
+# Create the log groups
+############################
+resource "aws_cloudwatch_log_group" "frontend" {
+  name              = "/ecs/pokemon-frontend"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_log_group" "backend" {
+  name              = "/ecs/pokemon-backend"
+  retention_in_days = 14
 }

@@ -5,6 +5,8 @@ import { userLogin, userLogout } from '../controllers/login.controller';
 
 const router = express.Router();
 
+router.get("/health", (_req, res) => res.status(200).send("ok"));
+
 // Pokemon
 router.get('/pokemon', getPokemonList);
 router.get('/pokemon/:id', getPokemonData)

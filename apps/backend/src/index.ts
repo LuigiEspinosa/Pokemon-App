@@ -23,4 +23,4 @@ app.use('/api', routes);
 app.use((_req, res) => res.status(404).json({ error: 'Not Found' }));
 
 const port = Number(process.env.PORT || 4000);
-app.listen(port, () => console.log(`Backend listening on ${port}`));
+app.listen(port, "0.0.0.0", () => console.log(`Backend listening on ${port}`));
