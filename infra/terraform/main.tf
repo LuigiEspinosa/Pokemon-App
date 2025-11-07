@@ -44,6 +44,45 @@ module "vpc" {
   enable_nat_gateway = true
 }
 
+resource "aws_iam_role" "pokemon_backend_task_role" {
+  name = "pokemon-backend-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_iam_policy" "pokemon_backend_ssm_policy" {
+  name = "pokemon-backend-ssm-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter", "ssm:GetParameters", "kms:Decrypt"]
+        Resource = "arn:aws:ssm:us-east-1:${data.aws_caller_identity.current.account_id}:parameter/pokemon/JWT_SECRET"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "pokemon_backend_ssm_attach" {
+  role       = aws_iam_role.pokemon_backend_task_role.name
+  policy_arn = aws_iam_policy.pokemon_backend_ssm_policy.arn
+}
+
 ############################
 # Security Groups
 ############################
@@ -288,36 +327,29 @@ resource "aws_ecs_task_definition" "backend" {
   network_mode             = "awsvpc"
   cpu                      = 256
   memory                   = 512
-  execution_role_arn       = var.ecs_task_execution_role
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.pokemon_backend_task_role.arn
 
   container_definitions = jsonencode([
     {
-      name      = "backend",
-      image     = local.ecr_backend_img,
-      essential = true,
+      name  = "pokemon-backend"
+      image = var.backend_image
+
       portMappings = [
-        {
-          containerPort = 4000,
-          hostPort      = 4000,
-          protocol      = "tcp"
-        }
-      ],
+        { containerPort = 4000, hostPort = 4000 }
+      ]
+
       environment = [
-        { name = "PORT",            value = "4000" },
-        { name = "NODE_ENV",        value = "production" },
-        { name = "POKEAPI_BASE",    value = "https://pokeapi.co/api/v2" },
-        { name = "CORS_ORIGIN",     value = "https://${local.frontend_host}" },
-        { name = "JWT_SECRET",      value = var.jwt_secret },
-        { name = "JWT_EXPIRES_IN",  value = "7d" }
-      ],
-      logConfiguration = {
-        logDriver = "awslogs",
-        options = {
-          awslogs-group         = "/ecs/pokemon-backend",
-          awslogs-region        = var.region,
-          awslogs-stream-prefix = "ecs"
+        { name = "NODE_ENV", value = "production" },
+        { name = "PORT",     value = "4000" },
+      ]
+
+      secrets = [
+        {
+          name      = "JWT_SECRET"
+          valueFrom = "arn:aws:ssm:us-east-1:${data.aws_caller_identity.current.account_id}:parameter/pokemon/JWT_SECRET"
         }
-      }
+      ]
     }
   ])
 }
