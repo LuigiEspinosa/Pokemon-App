@@ -8,6 +8,17 @@ const loginSchema = z.object({
   password: z.string().min(1)
 });
 
+/**
+ * userLogin
+ * ---------
+ * Handles the user login process.
+ *
+ * Steps:
+ * 1. Validate request body using Zod to prevent malformed input.
+ * 2. Verify credentials (here, a simple static check for demonstration).
+ * 3. If valid, sign a JWT token and set it as a HTTP-only cookie.
+ * 4. Return a JSON response confirming authentication.
+ */
 export const userLogin = async (req: Request, res: Response) => {
   const parse = loginSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
@@ -37,6 +48,14 @@ export const userLogin = async (req: Request, res: Response) => {
   }
 }
 
+/**
+ * userLogout
+ * ----------
+ * Clears the authentication cookie to log the user out.
+ *
+ * Notes:
+ * - Must use the same cookie attributes (domain, sameSite, etc.) that were used when setting the cookie.
+ */
 export const userLogout = async (_req: Request, res: Response) => {
   const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
 

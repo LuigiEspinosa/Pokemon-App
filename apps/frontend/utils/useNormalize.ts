@@ -3,5 +3,5 @@ export function normalizeDigits(n: number) {
 }
 
 export function normalizeName(s: string) {
-  return s;
+  return s.replaceAll('-', ' ');
 }
